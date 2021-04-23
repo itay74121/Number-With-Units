@@ -1,6 +1,4 @@
-# Solution
 solution*
-
 # Prerequisites
 *.d
 
@@ -35,4 +33,7 @@ solution*
 *.app
 demo
 test
+<<<<<<< HEAD
 .vscode
+=======
+>>>>>>> fefa0920f489e1bf8373cdb20d84710ef066daa0

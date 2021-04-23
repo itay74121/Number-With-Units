@@ -1,5 +1,7 @@
 #include "NumberWithUnits.hpp"
 #include <iostream>
+#include <unordered_map>
+#include <fstream>
 using namespace ariel;
 using namespace std;
 namespace ariel 
@@ -7,7 +9,20 @@ namespace ariel
    
     void NumberWithUnits::read_units(ifstream & stream)
     {
-
+        typedef struct unit
+        {
+            string s;
+            uint value;
+        } unit;
+        unordered_map<string, unit> map;
+        string type, garbage;
+        unit u;
+        while(!stream.eof())
+        {
+            stream >> type >> garbage >> u.value >> u.s;
+            map.insert({type,u});
+        }
+        
     }
     NumberWithUnits NumberWithUnits::operator+ (const NumberWithUnits &other)const
     {
