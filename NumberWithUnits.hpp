@@ -2,15 +2,24 @@
 #define NUMBERWITHUNITS_
 #include <iostream>
 #include <string>
+#include <unordered_map>
+#include <exception>
 namespace ariel
 {
-    static std::string units [10] = {"km","m","cm","kg","ton","g","hour","min","sec","USD"};
+    typedef struct unit
+    {
+        std::string s;
+        double value;
+    } unit;
     class NumberWithUnits
     {
         private:
         double value;
         std::string unit;
-        double convert (std::string unit1,std::string unit2, double val); /*convert val from unit2 to unit1*/
+        bool check_key_in_map(std::string key) const;
+        NumberWithUnits convert (std::string unit1,std::string unit2, double val) const; /*convert val from unit2 to unit1*/
+        bool way(std::string type1, std::string type2) const;
+        static std::unordered_map<std::string,ariel::unit> map;
         public:
         NumberWithUnits()
         {
@@ -19,8 +28,13 @@ namespace ariel
         }
         NumberWithUnits(double value,std::string unit)
         {
-            this->value = value;
-            this->unit = unit;
+            if (check_key_in_map(unit))
+            {
+                this->value = value;
+                this->unit = unit;
+            }
+            else
+                throw std::invalid_argument("unit doesn't exists in unit.txt");
         }
         static void read_units(std::ifstream & stream);
         NumberWithUnits operator+ (const NumberWithUnits &other)const;
@@ -42,7 +56,7 @@ namespace ariel
         bool operator!=(const NumberWithUnits & other)const;
 
         friend std::ostream & operator << (std::ostream & os, const NumberWithUnits & other);
-        friend std::istream & operator >> (std::istream & is, const NumberWithUnits & other);
+        friend std::istream & operator >> (std::istream & is, NumberWithUnits & other);
         friend NumberWithUnits operator *(double var,const NumberWithUnits & n);
         NumberWithUnits operator * ( double  val);
 
@@ -60,7 +74,4 @@ namespace ariel
         }
     };
 }
-
-
-
 #endif

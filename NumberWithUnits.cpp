@@ -6,33 +6,89 @@ using namespace ariel;
 using namespace std;
 namespace ariel 
 {
-   
+
+    std::unordered_map<std::string,ariel::unit> NumberWithUnits::map = std::unordered_map<std::string,ariel::unit>();
+    bool NumberWithUnits::check_key_in_map(string key)const 
+    {
+        return map.find(key)!=map.end();
+    }
     void NumberWithUnits::read_units(ifstream & stream)
     {
-        typedef struct unit
-        {
-            string s;
-            uint value;
-        } unit;
-        unordered_map<string, unit> map;
-        string type, garbage;
-        unit u;
         while(!stream.eof())
         {
-            stream >> type >> garbage >> u.value >> u.s;
-            map.insert({type,u});
+            string type, garbage;
+            ariel::unit u,t;
+            stream >> garbage >> type >> garbage >> u.value >> u.s;
+            map[type] = u;
+            if(map.find(u.s) == map.end())
+            {
+                t.value=1;
+                t.s = u.s;
+                map[u.s] = t;
+            }
         }
-        
+    }
+    bool NumberWithUnits::way(string t1, string t2)const 
+    {
+        if (t1==t2)
+            return true;
+        if(map.find(t1)== map.end() || map.find(t2)== map.end())
+            return false;
+        // t1 to t2
+        ariel::unit temp;
+        temp = map[t1];
+        while( temp.s != map[temp.s].s && temp.s!=t2)
+        {
+            temp = map[temp.s];
+        }
+        return temp.s == t2;
+    }
+    double multway(unordered_map<string,ariel::unit>map,string t1, string t2)
+    {
+        if (t1 == t2)
+            return 1;
+        ariel::unit t = map[t1];
+        double s = 1;
+        while(t.s != t2)
+        {
+            s *= t.value;
+            t = map[t.s];
+        }
+        return s*t.value;
+    }
+    NumberWithUnits NumberWithUnits::convert(string t1, string t2, double val)const 
+    { // from t2 to t1 
+        if (t1 == t2)
+            return NumberWithUnits(val,t1);
+        if (this->way(t1,t2))
+        {
+            double ratio = 1.0 / multway(map, t1, t2);
+            NumberWithUnits ret(ratio*val,t1);    
+            return ret;
+        }
+        else if (this->way(t2,t1))
+        {
+            double ratio = multway(map, t2, t1);
+            NumberWithUnits ret(ratio*val,t1);    
+            return ret;
+        }
+        else
+            throw logic_error("Units do not match - "+t2+" cannot be converted to "+t1);
     }
     NumberWithUnits NumberWithUnits::operator+ (const NumberWithUnits &other)const
     {
-        NumberWithUnits n (5,"d");
-        return n;
+        if (other.getunit() == this->getunit())
+        {
+            return NumberWithUnits(this->getvalue()+other.getvalue(),this->getunit());
+        }
+        NumberWithUnits n = this->convert(this->getunit(),other.getunit(),other.getvalue());
+        return *(this) + n;
     } 
     NumberWithUnits NumberWithUnits::operator+=(const NumberWithUnits& other)
     {
-        NumberWithUnits n (5,"d");
-        return n;
+        NumberWithUnits n = convert(this->unit,other.getunit(),other.value);
+        this->value += n.value;
+        return (*this);
     }
     NumberWithUnits NumberWithUnits::operator+ ()const
     {
@@ -41,13 +97,18 @@ namespace ariel
     } 
     NumberWithUnits NumberWithUnits::operator- (const NumberWithUnits &other)const
     {
-        NumberWithUnits n (5,"d");
-        return n;
+        if (other.getunit() == this->getunit())
+        {
+            return NumberWithUnits(this->getvalue()-other.getvalue(),this->getunit());
+        }
+        NumberWithUnits n = this->convert(this->getunit(),other.getunit(),other.getvalue());
+        return *(this) - n;
     } 
     NumberWithUnits NumberWithUnits::operator-=(const NumberWithUnits& other)
     {
-        NumberWithUnits n (5,"d");
-        return n;
+        NumberWithUnits n = this->convert(this->getunit(),other.getunit(),other.getvalue());
+        this->value -= n.value;
+        return (*this);
     }
     NumberWithUnits NumberWithUnits::operator- ()const
     {
@@ -83,38 +144,46 @@ namespace ariel
 
     bool  NumberWithUnits::operator<(const NumberWithUnits & other)const
     {
-        return false;
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value < n.value;
     }
     bool  NumberWithUnits::operator<=(const NumberWithUnits & other)const
     {
-        return false;
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value <= n.value;
     }
     bool  NumberWithUnits::operator>(const NumberWithUnits & other)const
     {
-        return false;
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value > n.value;
 
     }
     bool  NumberWithUnits::operator>=(const NumberWithUnits & other)const
     {
-        return false;
-
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value > n.value;
     }
     bool  NumberWithUnits::operator==( const NumberWithUnits& other)const
     {
-        return this->unit == other.getunit() && other.getvalue() == this->value;
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value == n.value;
     }
     bool  NumberWithUnits::operator!=(const NumberWithUnits & other)const
     {
-        return false;
+        NumberWithUnits n = convert(this->unit,other.unit,other.value);
+        return this->value != n.value;
     }
 
     ostream & operator << (ostream & os, const NumberWithUnits & other)
     {
-        os << other.value <<"[" <<other.unit << "]";
+        os << other.value <<"[ " <<other.unit << " ]";
         return os;
     }
-    istream & operator >> (istream & is, const NumberWithUnits & other)
+    istream & operator >> (istream & is, NumberWithUnits & other)
     {
+        string g;
+        if (!is.eof())
+            is >> other.value >> g >> other.unit >> g;
         return is;
     }
     NumberWithUnits operator *(double var,const NumberWithUnits & n)
@@ -126,8 +195,8 @@ namespace ariel
 
     NumberWithUnits NumberWithUnits::operator * (double val)
     {
-        NumberWithUnits u;
-        return u;
+        NumberWithUnits u = *this;
+        return val*u;
     }
 
 }
