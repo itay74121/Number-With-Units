@@ -23,11 +23,17 @@ namespace ariel
         public:
         NumberWithUnits()
         {
-            value = 0;
-            unit = "km";
+            
+        }
+        NumberWithUnits(const NumberWithUnits & other)
+        {
+            this->value = other.value;
+            this->unit = other.unit;
         }
         NumberWithUnits(double value,std::string unit)
         {
+            if(unit == "")
+                throw std::invalid_argument("unit doesn't exists in unit.txt");
             if (check_key_in_map(unit))
             {
                 this->value = value;
@@ -43,9 +49,9 @@ namespace ariel
         NumberWithUnits operator- (const NumberWithUnits &other)const;
         NumberWithUnits operator-=(const NumberWithUnits& other);
         NumberWithUnits operator- ()const;
-        NumberWithUnits operator++();
+        NumberWithUnits & operator++();
         NumberWithUnits operator++(int dummy);
-        NumberWithUnits operator--();
+        NumberWithUnits & operator--();
         NumberWithUnits operator--(int dummy);    
 
         bool operator<(const NumberWithUnits & other)const;
